@@ -4,6 +4,7 @@ from tkinter import filedialog
 import os
 import json
 import tkinter.messagebox as messagebox
+import VirtualKeyboard as vk
 
 class MusicPlayer:
     def __init__(self, master):
@@ -15,12 +16,15 @@ class MusicPlayer:
         self.playlist_box = tk.Listbox(master, height=25, width=60)  # New listbox for the playlist
         self.playlist_box.pack()
 
+        self.save_entry = tk.Entry(master)  # Create a text entry widget
+        self.virtual_keyboard = vk.VirtualKeyboard(master, self.save_entry)
+
         self.playlists_file = 'playlists.json'  # File to save the playlists
 
-        if os.path.exists(self.playlists_file):  # If the playlists file exists
-            with open(self.playlists_file, 'r') as f:  # Open the file
+        try:
+            with open(self.playlists_file, 'r') as f:  # Try to open the file
                 self.playlists = json.load(f)  # Load the playlists from the file
-        else:
+        except FileNotFoundError:
             self.playlists = {}
 
         self.playlist = []
@@ -47,18 +51,26 @@ class MusicPlayer:
         self.remove_button = tk.Button(master, text="Remove Song", command=self.remove_song)
         self.remove_button.pack()
 
-        self.delete_button = tk.Button(master, text="Delete Playlist", command=self.delete_playlist)  
-        self.delete_button.pack()
+        self.load_entry = tk.Entry(master)
+        self.load_entry.pack()
+        self.load_button = tk.Button(master, text="Load Playlist", command=self.load_playlist_ui)
+        self.load_button.pack()
 
         self.save_entry = tk.Entry(master)
         self.save_entry.pack()
         self.save_button = tk.Button(master, text="Save Playlist", command=self.save_playlist)
         self.save_button.pack()
 
-        self.load_entry = tk.Entry(master)
-        self.load_entry.pack()
-        self.load_button = tk.Button(master, text="Load Playlist", command=self.load_playlist_ui)
-        self.load_button.pack()
+        self.virtual_keyboard = vk.VirtualKeyboard(master, self.save_entry)
+
+        self.keyboard_button = tk.Button(master, text="Virtual Keyboard", command=self.virtual_keyboard.show)
+        self.keyboard_button.pack()
+
+        self.delete_button = tk.Button(master, text="Delete Playlist", command=self.delete_playlist)  
+        self.delete_button.pack()
+
+    def launch_virtual_keyboard(self):
+        self.virtual_keyboard.show()
 
     def add_to_playlist_ui(self):
         filename = filedialog.askopenfilename(filetypes=[("Music Files", "*.mp4")])

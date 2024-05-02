@@ -8,13 +8,21 @@ import VirtualKeyboard as vk
 
 class MusicPlayer:
     def __init__(self, master):
-        master.title("Music Player")
-
+        master.title("G.M.P. - Gym Music Player")
+   
         self.instance = vlc.Instance('--input-repeat=-1', '--fullscreen')
         self.player = self.instance.media_player_new()
 
-        self.playlist_box = tk.Listbox(master, height=25, width=60)  # New listbox for the playlist
+        # Create a label for the song listbox
+        self.playlist_label = tk.Label(master, text="Songs in current playlist:")
+        self.playlist_label.pack()
+
+        self.playlist_box = tk.Listbox(master, height=20, width=75)  # New listbox for the playlist
         self.playlist_box.pack()
+
+        # Create a label for the playlist listbox
+        self.playlist_listbox_label = tk.Label(master, text="Saved playlists:")
+        self.playlist_listbox_label.pack()
 
         self.save_entry = tk.Entry(master)  # Create a text entry widget
         self.virtual_keyboard = vk.VirtualKeyboard(master, self.save_entry)
@@ -26,6 +34,28 @@ class MusicPlayer:
                 self.playlists = json.load(f)  # Load the playlists from the file
         except FileNotFoundError:
             self.playlists = {}
+        except PermissionError:
+            messagebox.showerror("Error", "Permission denied")
+        except json.JSONDecodeError:
+            messagebox.showerror("Error", "Error decoding JSON")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+
+        self.playlist_listbox = tk.Listbox(master)
+        self.playlist_listbox.pack()
+
+        # After loading the playlists from the file
+        self.update_playlist_listbox()
+
+        # After saving a playlist
+        playlist_name = self.save_entry.get()  # Get the playlist name from the text entry widget
+        if playlist_name:  # If the user entered a playlist name
+            self.playlists[playlist_name] = self.playlists  # Add the new playlist to self.playlists
+
+        # After deleting a playlist
+        if playlist_name in self.playlists:  # If the playlist exists
+            del self.playlists[playlist_name]  # Delete the playlist
+        self.update_playlist_listbox()
 
         self.playlist = []
         self.current_song_index = 0
@@ -51,14 +81,16 @@ class MusicPlayer:
         self.remove_button = tk.Button(master, text="Remove Song", command=self.remove_song)
         self.remove_button.pack()
 
-        self.load_entry = tk.Entry(master)
+        self.load_entry = tk.Entry(master)  # Create a text entry widget for loading playlists
         self.load_entry.pack()
         self.load_button = tk.Button(master, text="Load Playlist", command=self.load_playlist_ui)
+        self.load_entry.bind('<FocusIn>', self.focus_in_load_entry)
         self.load_button.pack()
 
         self.save_entry = tk.Entry(master)
         self.save_entry.pack()
         self.save_button = tk.Button(master, text="Save Playlist", command=self.save_playlist)
+        self.save_entry.bind('<FocusIn>', self.focus_in_save_entry)
         self.save_button.pack()
 
         self.virtual_keyboard = vk.VirtualKeyboard(master, self.save_entry)
@@ -66,11 +98,17 @@ class MusicPlayer:
         self.keyboard_button = tk.Button(master, text="Virtual Keyboard", command=self.virtual_keyboard.show)
         self.keyboard_button.pack()
 
-        self.delete_button = tk.Button(master, text="Delete Playlist", command=self.delete_playlist)  
+        self.delete_button = tk.Button(master, text="Delete Playlist")
         self.delete_button.pack()
+        self.delete_button.bind('<Button-1>', lambda event: self.delete_playlist())
 
     def launch_virtual_keyboard(self):
         self.virtual_keyboard.show()
+
+    def update_playlist_listbox(self):
+        self.playlist_listbox.delete(0, tk.END)  # Clear the listbox
+        for playlist_name in self.playlists:  # Loop through the saved playlists
+            self.playlist_listbox.insert(tk.END, playlist_name)  # Add each playlist name to the listbox
 
     def add_to_playlist_ui(self):
         filename = filedialog.askopenfilename(filetypes=[("Music Files", "*.mp4")])
@@ -80,15 +118,31 @@ class MusicPlayer:
             with open(self.playlist_file, 'w') as f:  # Open the playlist file
                 json.dump(self.playlist, f)  # Save the playlist to the file
 
+    def focus_in_save_entry(self, event):
+        self.virtual_keyboard.text_entry = self.save_entry
+
     def save_playlist(self):
         playlist_name = self.save_entry.get()
-        self.playlists[playlist_name] = self.playlist
-        with open(self.playlists_file, 'w') as f:
-            json.dump(self.playlists, f)
+        if not playlist_name.strip():  # Check if the playlist name is empty
+            messagebox.showerror("Error", "You have to name a playlist")
+            return
+        confirm = messagebox.askyesno("Confirm", "Do you want to save this playlist? You may have to restart the program afterwards to see results.")
+        if confirm:
+            self.playlists[playlist_name] = self.playlist
+            with open(self.playlists_file, 'w') as f:
+                json.dump(self.playlists, f)
+
+    def focus_in_load_entry(self, event):
+        self.virtual_keyboard.text_entry = self.load_entry
 
     def load_playlist_ui(self):
-        playlist_name = self.load_entry.get()
-        self.load_playlist(playlist_name)
+        # Get the selected playlist name from the listbox
+        selected = self.playlist_listbox.curselection()
+        if selected: 
+            playlist_name = self.playlist_listbox.get(selected[0])
+            self.load_playlist(playlist_name)
+        else:
+            messagebox.showerror("Error", "No playlist selected")
 
     def load_playlist(self, playlist_name):
         if playlist_name in self.playlists:
@@ -100,16 +154,22 @@ class MusicPlayer:
             messagebox.showerror("Error", f"No playlist named {playlist_name}")
 
     def delete_playlist(self):
-        playlist_name = self.load_entry.get()  # Get the name of the playlist to delete
-        if playlist_name in self.playlists:
-            del self.playlists[playlist_name]  # Remove the playlist from the dictionary
-            with open(self.playlists_file, 'w') as f:  # Open the playlists file
-                json.dump(self.playlists, f)  # Save the updated playlists to the file
-            self.player.stop()  # Stop the player
-            self.playlist.clear()  # Clear the playlist
-            self.playlist_box.delete(0, tk.END)  # Clear the playlist box
+        # Get the selected playlist name from the listbox
+        selected = self.playlist_listbox.curselection()
+        if selected:  # If a playlist is selected
+            playlist_name = self.playlist_listbox.get(selected[0])
         else:
-            messagebox.showerror("Error", f"No playlist named {playlist_name}")
+            messagebox.showerror("Error", "No playlist selected")
+            return
+        if playlist_name not in self.playlists:  # Check if the playlist exists
+            messagebox.showerror("Error", "Playlist not found")
+            return
+        confirm = messagebox.askyesno("Confirm", "Are you sure you want to delete the highlighted playlist?")
+        if confirm:
+            del self.playlists[playlist_name]
+            with open(self.playlists_file, 'w') as f:
+                json.dump(self.playlists, f)
+            self.playlist_listbox.delete(selected[0])  # Remove the playlist from the listbox
 
     def remove_song(self):  # New method to remove songs
         selected_song_index = self.playlist_box.curselection()  # Get the index of the selected song

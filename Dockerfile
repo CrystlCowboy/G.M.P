@@ -7,10 +7,12 @@ WORKDIR /app
 # Copy the application files to the container
 COPY . /app
 
-# Install VLC and any needed packages specified in requirements.txt
+# Install dependencies step by step and check for errors
 RUN apt-get update && \
     apt-get install -y vlc && \
     apt-get install -y libatlas-base-dev gfortran && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
     pip install --no-cache-dir -r requirements.txt
 
 # Make port 80 available to the world outside this container

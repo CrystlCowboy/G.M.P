@@ -7,9 +7,9 @@ WORKDIR /app
 # Copy the application files to the container
 COPY . /app
 
-# Install VLC and any needed packages specified in requirements.txt
+# Install VLC, PulseAudio, and any needed packages specified in requirements.txt
 RUN apt-get update && \
-    apt-get install -y vlc && \
+    apt-get install -y vlc pulseaudio && \
     apt-get install -y libatlas-base-dev gfortran && \
     pip install --no-cache-dir -r requirements.txt
 

@@ -16,23 +16,46 @@ class MusicPlayer:
 
         # Set window size to screen size
         master.geometry(f"{screen_width}x{screen_height}")
-   
+
+        # Scrollbar
+        scrollbar = tk.Scrollbar(master)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Canvas
+        canvas = tk.Canvas(master, yscrollcommand=scrollbar.set)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Configure the scrollbar
+        scrollbar.config(command=canvas.yview)
+
+        # Frame inside Canvas
+        self.frame = tk.Frame(canvas)
+        canvas.create_window((0, 0), window=self.frame, anchor='nw')
+
+        def _on_frame_configure(event=None):
+            # Update scroll region after the inner frame changes
+            canvas.configure(scrollregion=canvas.bbox("all"))
+
+        self.frame.bind("<Configure>", _on_frame_configure)
+
         self.instance = vlc.Instance('--input-repeat=-1', '--fullscreen')
         self.player = self.instance.media_player_new()
 
         # Create a label for the song listbox
-        self.playlist_label = tk.Label(master, text="Songs in current playlist:")
+        self.playlist_label = tk.Label(self.frame, text="Songs in current playlist:")
         self.playlist_label.pack()
 
-        self.playlist_box = tk.Listbox(master, height=20, width=75)  # New listbox for the playlist
+        self.playlist_box = tk.Listbox(self.frame, height=20, width=75)  # New listbox for the playlist
         self.playlist_box.pack()
 
         # Create a label for the playlist listbox
-        self.playlist_listbox_label = tk.Label(master, text="Saved playlists:")
+        self.playlist_listbox_label = tk.Label(self.frame, text="Saved playlists:")
         self.playlist_listbox_label.pack()
 
-        self.save_entry = tk.Entry(master)  # Create a text entry widget
-        self.virtual_keyboard = vk.VirtualKeyboard(master, self.save_entry)
+        # Note: Add the rest of your widgets to self.frame instead of master
+
+        self.save_entry = tk.Entry(self.frame)  # Create a text entry widget
+        self.virtual_keyboard = vk.VirtualKeyboard(self.frame, self.save_entry)
 
         self.playlists_file = 'playlists.json'  # File to save the playlists
 
@@ -48,7 +71,7 @@ class MusicPlayer:
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
-        self.playlist_listbox = tk.Listbox(master)
+        self.playlist_listbox = tk.Listbox(self.frame)
         self.playlist_listbox.pack()
 
         # After loading the playlists from the file
@@ -67,45 +90,46 @@ class MusicPlayer:
         self.playlist = []
         self.current_song_index = 0
 
-        self.play_button = tk.Button(master, text="Play", command=self.play)
+        self.play_button = tk.Button(self.frame, text="Play", command=self.play)
         self.play_button.pack()
 
-        self.pause_button = tk.Button(master, text="Pause", command=self.pause)
+        self.pause_button = tk.Button(self.frame, text="Pause", command=self.pause)
         self.pause_button.pack()
 
-        self.stop_button = tk.Button(master, text="Stop", command=self.stop)
+        self.stop_button = tk.Button(self.frame, text="Stop", command=self.stop)
         self.stop_button.pack()
 
-        self.next_button = tk.Button(master, text="Next", command=self.next)
+        self.next_button = tk.Button(self.frame, text="Next", command=self.next)
         self.next_button.pack()
 
-        self.prev_button = tk.Button(master, text="Previous", command=self.previous)
+        self.prev_button = tk.Button(self.frame, text="Previous", command=self.previous)
         self.prev_button.pack()
 
-        self.add_button = tk.Button(master, text="Add to Playlist", command=self.add_to_playlist_ui)
+        self.add_button = tk.Button(self.frame, text="Add to Playlist", command=self.add_to_playlist_ui)
         self.add_button.pack()
 
-        self.remove_button = tk.Button(master, text="Remove Song", command=self.remove_song)
+        self.remove_button = tk.Button(self.frame, text="Remove Song", command=self.remove_song)
         self.remove_button.pack()
 
-        self.load_entry = tk.Entry(master)  # Create a text entry widget for loading playlists
+        self.load_entry = tk.Entry(self.frame)  # Create a text entry widget for loading playlists
         self.load_entry.pack()
-        self.load_button = tk.Button(master, text="Load Playlist", command=self.load_playlist_ui)
+        self.load_button = tk.Button(self.frame, text="Load Playlist", command=self.load_playlist_ui)
         self.load_entry.bind('<FocusIn>', self.focus_in_load_entry)
         self.load_button.pack()
 
-        self.save_entry = tk.Entry(master)
+        self.save_entry = tk.Entry(self.frame)
         self.save_entry.pack()
-        self.save_button = tk.Button(master, text="Save Playlist", command=self.save_playlist)
+
+        self.save_button = tk.Button(self.frame, text="Save Playlist", command=self.save_playlist)
         self.save_entry.bind('<FocusIn>', self.focus_in_save_entry)
         self.save_button.pack()
 
         self.virtual_keyboard = vk.VirtualKeyboard(master, self.save_entry)
 
-        self.keyboard_button = tk.Button(master, text="Virtual Keyboard", command=self.virtual_keyboard.show)
+        self.keyboard_button = tk.Button(self.frame, text="Virtual Keyboard", command=self.virtual_keyboard.show)
         self.keyboard_button.pack()
 
-        self.delete_button = tk.Button(master, text="Delete Playlist")
+        self.delete_button = tk.Button(self.frame, text="Delete Playlist")
         self.delete_button.pack()
         self.delete_button.bind('<Button-1>', lambda event: self.delete_playlist())
 

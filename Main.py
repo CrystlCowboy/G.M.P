@@ -9,6 +9,13 @@ import VirtualKeyboard as vk
 class MusicPlayer:
     def __init__(self, master):
         master.title("G.M.P. - Gym Music Player")
+
+        # Get screen width and height
+        screen_width = master.winfo_screenwidth()
+        screen_height = master.winfo_screenheight()
+
+        # Set window size to screen size
+        master.geometry(f"{screen_width}x{screen_height}")
    
         self.instance = vlc.Instance('--input-repeat=-1', '--fullscreen')
         self.player = self.instance.media_player_new()

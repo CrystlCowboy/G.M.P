@@ -13,6 +13,9 @@ RUN apt-get update && \
     apt-get install -y libatlas-base-dev gfortran && \
     pip install --no-cache-dir -r requirements.txt
 
+# Set environment variables for PulseAudio
+ENV PULSE_SERVER unix:/run/pulse/native
+
 # Make port 80 available to the world outside this container
 EXPOSE 80
 

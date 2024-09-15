@@ -5,12 +5,14 @@ This is a Python Tkinter project for my home gym that does not have internet acc
 
 All hardware and expenses were paid for by GRIPTAPE.ORG (Youth Driving Learning)
 
+FOR NOW. This is just used as a Music Player Program that runs on my Desktop. I made changes that include a ico file that can be used as an icon for a desktop shortcut and a script that can automatically run/open the program (unsure if it works on linux)
+
+Instructions on how to download this program for yourself below:
+
 Prerequisites before downloading: 
-1. Make sure there is a proper audio output on whatever you are downloading the program on (unknown "pulseaudio" software error (this is a critical error))
+1. Make sure there is a proper audio output on whatever you are downloading the program on (unknown "pulseaudio" software error (this is a non-critical error))
 2. Make sure that docker is installed on whatever you are downloading the program on for downloading the tar file
 
-Instructions on how to use:
+Inststructions on how to use:
 1. Download the tar file... (adding tar file soon...)
-
-Program is on pause for right now. Everything on the program works except for audio output on the Raspberry Pi due to "pulseaudio" error.
-Currently too busy with College work to fix the error. Will fix and finish the project when on break.
+   
